@@ -42,26 +42,26 @@ global.mode = store.getState().settings.uiMode;
 global.icon = `${__dirname}/icons/${global.mode}/icon.png`;
 global.dirname = __dirname;
 global.i18n = i18n;
-    
+
 // INTERFACE PATHS
 // - WALLET
 if (global.mode === 'wallet') {
     log.info('Starting in Wallet mode');
 
-    global.interfaceAppUrl = (Settings.inProductionMode)
-        ? `file://${__dirname}/interface/wallet/index.html`
-        : 'http://localhost:3050';
-    global.interfacePopupsUrl = (Settings.inProductionMode)
-        ? `file://${__dirname}/interface/index.html`
-        : 'http://localhost:3000';
+    global.interfaceAppUrl = (Settings.inProductionMode) ?
+        `file://${__dirname}/interface/wallet/index.html` :
+        'http://localhost:3050';
+    global.interfacePopupsUrl = (Settings.inProductionMode) ?
+        `file://${__dirname}/interface/index.html` :
+        'http://localhost:3000';
 
-// - MIST
+    // - MIST
 } else {
     log.info('Starting in Mist mode');
 
-    let url = (Settings.inProductionMode)
-        ? `file://${__dirname}/interface/index.html`
-        : 'http://localhost:3000';
+    let url = (Settings.inProductionMode) ?
+        `file://${__dirname}/interface/index.html` :
+        'http://localhost:3000';
 
     if (Settings.cli.resetTabs) {
         url += '?reset-tabs=true';
@@ -85,7 +85,7 @@ app.on('open-url', (e, url) => log.info('Open URL', url));
 
 let killedSocketsAndNodes = false;
 
-app.on('before-quit', async (event) => {
+app.on('before-quit', async(event) => {
     if (!killedSocketsAndNodes) {
         log.info('Defer quitting until sockets and node are shut down');
 
@@ -100,7 +100,7 @@ app.on('before-quit', async (event) => {
         }
 
         // delay quit, so the sockets can close
-        setTimeout(async () => {
+        setTimeout(async() => {
             await ethereumNode.stop();
             store.dispatch({ type: '[MAIN]:ETH_NODE:STOP' });
 
@@ -123,11 +123,11 @@ let startMainWindow;
 
 // This method will be called when Electron has done everything
 // initialization and ready for creating browser windows.
-app.on('ready', async () => {
+app.on('ready', async() => {
     // if using HTTP RPC then inform user
     if (Settings.rpcMode === 'http') {
         dialog.showErrorBox('Insecure RPC connection', `
-WARNING: You are connecting to an Ethereum node via: ${Settings.rpcHttpPath}
+WARNING: You are connecting to an Atlas node via: ${Settings.rpcHttpPath}
 
 This is less secure than using local IPC - your passwords will be sent over the wire in plaintext.
 
@@ -150,69 +150,69 @@ Only do this if you have secured your HTTP connection or you know what you are d
 protocol.registerStandardSchemes(['bzz']);
 
 onReady = () => {
-    global.config = db.getCollection('SYS_config');
+        global.config = db.getCollection('SYS_config');
 
-    // setup DB sync to backend
-    dbSync.backendSyncInit();
-    store.dispatch({ type: '[MAIN]:DB:SYNC_TO_BACKEND' });
+        // setup DB sync to backend
+        dbSync.backendSyncInit();
+        store.dispatch({ type: '[MAIN]:DB:SYNC_TO_BACKEND' });
 
-    // Initialise window mgr
-    Windows.init();
+        // Initialise window mgr
+        Windows.init();
 
-    // Enable the Swarm protocol
-    protocol.registerHttpProtocol('bzz', (request, callback) => {
-        const redirectPath = `${Settings.swarmURL}/${request.url.replace('bzz:/', 'bzz://')}`;
-        callback({ method: request.method, referrer: request.referrer, url: redirectPath });
-        store.dispatch({ type: '[MAIN]:PROTOCOL:REGISTER', payload: { protocol: 'bzz' } });
-    }, (error) => {
-        if (error) {
-            log.error(error);
-        }
-    });
-
-    // check for update
-    if (!Settings.inAutoTestMode) {
-        UpdateChecker.run();
-        store.dispatch({ type: '[MAIN]:UPDATE_CHECKER:FINISHED' });
-    }
-
-    // initialize the web3 IPC provider backend
-    ipcProviderBackend.init();
-    store.dispatch({ type: '[MAIN]:IPC_PROVIDER_BACKEND:INIT' });
-
-    // instantiate custom protocols
-    // require('./customProtocols.js');
-
-    // change to user language now that global.config object is ready
-    store.dispatch(setLanguageOnMain(Settings.language));
-
-    // add menu already here, so we have copy and paste functionality
-    appMenu();
-
-    global.defaultWindow = windowStateKeeper({ defaultWidth: 1024 + 208, defaultHeight: 720 });
-
-    // Create the browser window.
-    mainWindow = Windows.create('main');
-
-    // Delegating events to save window bounds on windowStateKeeper
-    global.defaultWindow.manage(mainWindow.window);
-
-    if (!Settings.inAutoTestMode) { splashWindow = Windows.create('splash'); }
-
-    // Checks time sync
-    if (!Settings.skiptimesynccheck) {
-        timesync.checkEnabled((err, enabled) => {
-            if (err) {
-                log.error('Couldn\'t infer if computer automatically syncs time.', err);
-                return;
+        // Enable the Swarm protocol
+        protocol.registerHttpProtocol('bzz', (request, callback) => {
+            const redirectPath = `${Settings.swarmURL}/${request.url.replace('bzz:/', 'bzz://')}`;
+            callback({ method: request.method, referrer: request.referrer, url: redirectPath });
+            store.dispatch({ type: '[MAIN]:PROTOCOL:REGISTER', payload: { protocol: 'bzz' } });
+        }, (error) => {
+            if (error) {
+                log.error(error);
             }
+        });
 
-            if (!enabled) {
-                dialog.showMessageBox({
-                    type: 'warning',
-                    buttons: ['OK'],
-                    message: global.i18n.t('mist.errors.timeSync.title'),
-                    detail: `${global.i18n.t('mist.errors.timeSync.description')}\n\n${global.i18n.t(`mist.errors.timeSync.${process.platform}`)}`,
+        // check for update
+        if (!Settings.inAutoTestMode) {
+            UpdateChecker.run();
+            store.dispatch({ type: '[MAIN]:UPDATE_CHECKER:FINISHED' });
+        }
+
+        // initialize the web3 IPC provider backend
+        ipcProviderBackend.init();
+        store.dispatch({ type: '[MAIN]:IPC_PROVIDER_BACKEND:INIT' });
+
+        // instantiate custom protocols
+        // require('./customProtocols.js');
+
+        // change to user language now that global.config object is ready
+        store.dispatch(setLanguageOnMain(Settings.language));
+
+        // add menu already here, so we have copy and paste functionality
+        appMenu();
+
+        global.defaultWindow = windowStateKeeper({ defaultWidth: 1024 + 208, defaultHeight: 720 });
+
+        // Create the browser window.
+        mainWindow = Windows.create('main');
+
+        // Delegating events to save window bounds on windowStateKeeper
+        global.defaultWindow.manage(mainWindow.window);
+
+        if (!Settings.inAutoTestMode) { splashWindow = Windows.create('splash'); }
+
+        // Checks time sync
+        if (!Settings.skiptimesynccheck) {
+            timesync.checkEnabled((err, enabled) => {
+                        if (err) {
+                            log.error('Couldn\'t infer if computer automatically syncs time.', err);
+                            return;
+                        }
+
+                        if (!enabled) {
+                            dialog.showMessageBox({
+                                        type: 'warning',
+                                        buttons: ['OK'],
+                                        message: global.i18n.t('mist.errors.timeSync.title'),
+                                        detail: `${global.i18n.t('mist.errors.timeSync.description')}\n\n${global.i18n.t(`mist.errors.timeSync.${process.platform}`)}`,
                 }, () => {
                 });
             }
@@ -288,7 +288,7 @@ onReady = () => {
                     message: global.i18n.t('mist.errors.legacyChain.title'),
                     detail: global.i18n.t('mist.errors.legacyChain.description')
                 }, () => {
-                    shell.openExternal('https://github.com/ethereum/mist/releases');
+                    shell.openExternal('https://github.com/atlaswork/atlasmist/releases');
                     store.dispatch(quitApp());
                 });
 
